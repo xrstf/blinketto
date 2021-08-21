@@ -62,9 +62,9 @@ The PCA LED driver is also much better routed in this version.
 
 While Blinketto 3 was "in production" for a good year, I ordered a bunch of plexiglas panes for my
 projects. These were meant to be used for all sorts of my projects, like [Frøy](https://github.com/xrstf/froy),
-so I wanted to refresh Blinketto with the stuf I learned over the year.
+so I wanted to refresh Blinketto with the stuff I learned over the year.
 
-It now has a USB->UART converted on board, which makes programming it much easier. The ESP8266
+It now has a USB->UART converter on board, which makes programming it much easier. The ESP8266
 instead of ATmega adds nice WiFi capabilities, but required an additional shift register as an I/O
 expander, as the ESP-WROOM-02 does not have enough pins for all 8 LED devices.
 
