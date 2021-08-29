@@ -19,39 +19,46 @@ void BlinkettoModeRandomFade::setConfigDefaults(BlinkettoModeRandomFadeConfig *c
 	config->maxChangePerInterval = 50;
 }
 
+void BlinkettoModeRandomFade::toJSON(BlinkettoModeRandomFadeConfig *config, JsonDocument &doc) {
+	doc["steps"] = config->steps;
+	doc["delay"] = config->stepDelay;
+	doc["min"] = config->minChangePerInterval;
+	doc["max"] = config->maxChangePerInterval;
+}
+
 bool BlinkettoModeRandomFade::updateFromJSON(BlinkettoModeRandomFadeConfig *config, const JsonDocument &doc) {
 	bool changes = false;
 
 	if (doc.containsKey("steps")) {
 		int steps = doc["steps"];
-		if (steps >= 0 && steps <= 60 && ((char)steps) != config->steps) {
+		if (steps >= 1 && steps <= 50 && ((char)steps) != config->steps) {
 			xrstf::serialPrintf("Update: Setting modeRandomFade.steps to %d.\n", steps);
 			config->steps = (uint8_t)steps;
 			changes       = true;
 		}
 	}
 
-	if (doc.containsKey("stepDelay")) {
-		int stepDelay = doc["stepDelay"];
-		if (stepDelay >= 0 && stepDelay <= 60 && ((char)stepDelay) != config->stepDelay) {
+	if (doc.containsKey("delay")) {
+		int stepDelay = doc["delay"];
+		if (stepDelay >= 0 && stepDelay <= 100 && ((char)stepDelay) != config->stepDelay) {
 			xrstf::serialPrintf("Update: Setting modeRandomFade.stepDelay to %d.\n", stepDelay);
 			config->stepDelay = (uint32_t)stepDelay;
 			changes           = true;
 		}
 	}
 
-	if (doc.containsKey("minChangePerInterval")) {
-		int minChangePerInterval = doc["minChangePerInterval"];
-		if (minChangePerInterval >= 0 && minChangePerInterval <= 60 && ((char)minChangePerInterval) != config->minChangePerInterval) {
+	if (doc.containsKey("min")) {
+		int minChangePerInterval = doc["min"];
+		if (minChangePerInterval >= 1 && minChangePerInterval <= 100 && ((char)minChangePerInterval) != config->minChangePerInterval) {
 			xrstf::serialPrintf("Update: Setting modeRandomFade.minChangePerInterval to %d.\n", minChangePerInterval);
 			config->minChangePerInterval = (uint8_t)minChangePerInterval;
 			changes                      = true;
 		}
 	}
 
-	if (doc.containsKey("maxChangePerInterval")) {
-		int maxChangePerInterval = doc["maxChangePerInterval"];
-		if (maxChangePerInterval >= 0 && maxChangePerInterval <= 60 && ((char)maxChangePerInterval) != config->maxChangePerInterval) {
+	if (doc.containsKey("max")) {
+		int maxChangePerInterval = doc["max"];
+		if (maxChangePerInterval >= 1 && maxChangePerInterval <= 100 && ((char)maxChangePerInterval) != config->maxChangePerInterval) {
 			xrstf::serialPrintf("Update: Setting modeRandomFade.maxChangePerInterval to %d.\n", maxChangePerInterval);
 			config->maxChangePerInterval = (uint8_t)maxChangePerInterval;
 			changes                      = true;

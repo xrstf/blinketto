@@ -18,6 +18,7 @@ public:
 	void run(Blinketto &blinketto, BlinkettoInterrupter &interrupter);
 
 	static void setConfigDefaults(BlinkettoModeCounterConfig *config);
+	static void toJSON(BlinkettoModeCounterConfig *config, JsonDocument &doc);
 	static bool updateFromJSON(BlinkettoModeCounterConfig *config, const JsonDocument &doc);
 	static bool handleCLICommand(BlinkettoModeCounterConfig *config, char *cmdArgs);
 

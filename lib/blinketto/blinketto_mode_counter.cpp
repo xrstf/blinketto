@@ -19,39 +19,46 @@ void BlinkettoModeCounter::setConfigDefaults(BlinkettoModeCounterConfig *config)
 	config->timeBetweenEndings = 2000;
 }
 
+void BlinkettoModeCounter::toJSON(BlinkettoModeCounterConfig *config, JsonDocument &doc) {
+	doc["steps"] = config->steps;
+	doc["delay"] = config->stepDelay;
+	doc["nInt"] = config->timeBetweenNumbers; // "number interval"
+	doc["eInt"] = config->timeBetweenEndings; // "ending interval"
+}
+
 bool BlinkettoModeCounter::updateFromJSON(BlinkettoModeCounterConfig *config, const JsonDocument &doc) {
 	bool changes = false;
 
 	if (doc.containsKey("steps")) {
 		int steps = doc["steps"];
-		if (steps >= 0 && steps <= 60 && ((char)steps) != config->steps) {
+		if (steps >= 1 && steps <= 50 && ((char)steps) != config->steps) {
 			xrstf::serialPrintf("Update: Setting modeCounter.steps to %d.\n", steps);
 			config->steps = (uint8_t)steps;
 			changes       = true;
 		}
 	}
 
-	if (doc.containsKey("stepDelay")) {
-		int stepDelay = doc["stepDelay"];
-		if (stepDelay >= 0 && stepDelay <= 60 && ((char)stepDelay) != config->stepDelay) {
+	if (doc.containsKey("delay")) {
+		int stepDelay = doc["delay"];
+		if (stepDelay >= 0 && stepDelay <= 100 && ((char)stepDelay) != config->stepDelay) {
 			xrstf::serialPrintf("Update: Setting modeCounter.stepDelay to %d.\n", stepDelay);
 			config->stepDelay = (uint32_t)stepDelay;
 			changes           = true;
 		}
 	}
 
-	if (doc.containsKey("timeBetweenNumbers")) {
-		int timeBetweenNumbers = doc["timeBetweenNumbers"];
-		if (timeBetweenNumbers >= 0 && timeBetweenNumbers <= 60 && ((char)timeBetweenNumbers) != config->timeBetweenNumbers) {
+	if (doc.containsKey("nInt")) {
+		int timeBetweenNumbers = doc["nInt"];
+		if (timeBetweenNumbers >= 0 && timeBetweenNumbers <= 10000 && ((char)timeBetweenNumbers) != config->timeBetweenNumbers) {
 			xrstf::serialPrintf("Update: Setting modeCounter.timeBetweenNumbers to %d.\n", timeBetweenNumbers);
 			config->timeBetweenNumbers = (uint32_t)timeBetweenNumbers;
 			changes                    = true;
 		}
 	}
 
-	if (doc.containsKey("timeBetweenEndings")) {
-		int timeBetweenEndings = doc["timeBetweenEndings"];
-		if (timeBetweenEndings >= 0 && timeBetweenEndings <= 60 && ((char)timeBetweenEndings) != config->timeBetweenEndings) {
+	if (doc.containsKey("eInt")) {
+		int timeBetweenEndings = doc["eInt"];
+		if (timeBetweenEndings >= 0 && timeBetweenEndings <= 10000 && ((char)timeBetweenEndings) != config->timeBetweenEndings) {
 			xrstf::serialPrintf("Update: Setting modeCounter.timeBetweenEndings to %d.\n", timeBetweenEndings);
 			config->timeBetweenEndings = (uint32_t)timeBetweenEndings;
 			changes                    = true;

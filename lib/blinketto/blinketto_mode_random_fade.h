@@ -18,6 +18,7 @@ public:
 	void run(Blinketto &blinketto, BlinkettoInterrupter &interrupter);
 
 	static void setConfigDefaults(BlinkettoModeRandomFadeConfig *config);
+	static void toJSON(BlinkettoModeRandomFadeConfig *config, JsonDocument &doc);
 	static bool updateFromJSON(BlinkettoModeRandomFadeConfig *config, const JsonDocument &doc);
 	static bool handleCLICommand(BlinkettoModeRandomFadeConfig *config, char *cmdArgs);
 

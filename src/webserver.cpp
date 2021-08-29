@@ -1,4 +1,5 @@
 #include "webserver.h"
+#include "LittleFS.h"
 #include "config.h"
 #include "eeprom.h"
 #include "global.h"
@@ -13,12 +14,30 @@ namespace webserver {
 	eeprom::data *tmpContext;
 
 	void handleGetConfigurationRequest() {
-		StaticJsonDocument<192> doc;
+		StaticJsonDocument<512> doc;
 
-		doc["appVersion"]  = BLINKETTO_VERSION;
-		doc["dataVersion"] = tmpContext->version;
-		doc["currentMode"] = modeName(tmpContext->mode);
-		doc["ssid"]        = tmpContext->ssid;
+		doc["appVersion"] = BLINKETTO_VERSION;
+		doc["mode"]       = modeName(tmpContext->mode);
+		doc["brightness"] = tmpContext->brightness;
+		doc["ssid"]       = tmpContext->ssid;
+		doc["sleeping"]   = global::isSleeping;
+
+		StaticJsonDocument<128> modeBlinkConfig;
+		BlinkettoModeBlink::toJSON(&tmpContext->modeBlinkConfig, modeBlinkConfig);
+
+		StaticJsonDocument<128> modeCounterConfig;
+		BlinkettoModeCounter::toJSON(&tmpContext->modeCounterConfig, modeCounterConfig);
+
+		StaticJsonDocument<128> modeKittConfig;
+		BlinkettoModeKitt::toJSON(&tmpContext->modeKittConfig, modeKittConfig);
+
+		StaticJsonDocument<128> modeRandomFadeConfig;
+		BlinkettoModeRandomFade::toJSON(&tmpContext->modeRandomFadeConfig, modeRandomFadeConfig);
+
+		doc["modeBlink"]      = modeBlinkConfig;
+		doc["modeCounter"]    = modeCounterConfig;
+		doc["modeKitt"]       = modeKittConfig;
+		doc["modeRandomFade"] = modeRandomFadeConfig;
 
 		char buf[512];
 		memset(buf, 0, sizeof(buf));
@@ -40,7 +59,22 @@ namespace webserver {
 		}
 	}
 
+	void handleGetFileRequest(const String &filepath) {
+		File file = LittleFS.open(filepath, "r");
+		server.streamFile(file, mime::getContentType(filepath));
+		file.close();
+	}
+
 	void setup() {
+		if (!LittleFS.begin()) {
+			Serial.println("An Error has occurred while mounting LittleFS");
+			return;
+		}
+
+		server.serveStatic("/assets", LittleFS, "/assets", "max-age=2592000"); // 30d
+
+		server.on("/", []() { handleGetFileRequest("/index.html"); });
+
 		server.on("/config", []() {
 			switch (server.method()) {
 			case HTTP_GET:
@@ -56,10 +90,23 @@ namespace webserver {
 			}
 		});
 
+		server.on("/save", []() {
+			switch (server.method()) {
+			case HTTP_POST:
+				eeprom::save(tmpContext);
+				server.send(200, "text/plain", "OK");
+				break;
+
+			default:
+				server.send(400, "text/plain", "invalid method, allowed: POST");
+			}
+		});
+
 		server.on("/sleep", []() {
 			switch (server.method()) {
 			case HTTP_POST:
 				global::goToSleep = true;
+				server.send(200, "text/plain", "OK");
 				break;
 
 			default:
@@ -71,6 +118,7 @@ namespace webserver {
 			switch (server.method()) {
 			case HTTP_POST:
 				global::goWakeUp = true;
+				server.send(200, "text/plain", "OK");
 				break;
 
 			default:

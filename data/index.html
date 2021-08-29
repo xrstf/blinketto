@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> <!-- empty favicon to save one request -->
+  <title>Blinketto</title>
+  <link rel="stylesheet" href="assets/pico.min.css">
+  <style>
+    .center {
+      text-align: center;
+    }
+
+    :root {
+      --spacing: 0.7rem;
+    }
+
+    h2 {
+      --typography-spacing-vertical: 1.8rem;
+    }
+
+    .mode-form,
+    #overlay,
+    #configuration,
+    #is-sleeping,
+    #is-awake {
+      display: none;
+    }
+
+    article {
+      --block-spacing-vertical: calc(var(--spacing)*1.5);
+      --block-spacing-horizontal: calc(var(--spacing)*1.5);
+    }
+
+    article>p {
+      margin-bottom: 0;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      /*dim the background*/
+    }
+  </style>
+</head>
+
+<body>
+  <div id="overlay"></div>
+
+  <main class="container">
+    <h2 class="center" id="loading">
+      Loading…<br>
+      <progress id="indicator"></progress>
+    </h2>
+
+    <div id="configuration">
+      <h1>Blinketto <span id="version"></span></h1>
+
+      <div id="is-sleeping">
+        <p class="center">Your device is currently sleeping.</p>
+        <p class="center"><a href="#" id="button-wake-up" role="button" class="">🌞 Wake Up</a></p>
+      </div>
+
+      <div id="is-awake">
+        <p>Configure your device as you like. Remember to click <mark>Save</mark>
+          to persist your changes.</p>
+
+        <p class="center"><a href="#" id="button-sleep" role="button" class="">🌙 Sleep Mode</a></p>
+
+        <h2>Brightness</h2>
+        <input type="range" min="0" max="100" value="80" id="brightness" name="brightness">
+
+        <h2>Mode Select</h2>
+        <p class="center" id="mode-buttons">
+          <a href="#" data-mode="fullOn" id="button-mode-fullOn" role="button" class="outline secondary">Static</a>
+          <a href="#" data-mode="blink" id="button-mode-blink" role="button" class="outline secondary">Blink</a>
+          <a href="#" data-mode="counter" id="button-mode-counter" role="button" class="outline secondary">Counter</a>
+          <a href="#" data-mode="randomFade" id="button-mode-randomFade" role="button" class="outline secondary">Random
+            Fade</a>
+          <a href="#" data-mode="kitt" id="button-mode-kitt" role="button" class="outline secondary">Knight Rider</a>
+        </p>
+
+        <h2>Configuration</h2>
+
+        <article class="mode-form" id="form-mode-fullOn">
+          <p>This mode does not have any configuration options.</p>
+        </article>
+
+        <article class="mode-form" id="form-mode-blink">
+          <label for="mode-blink-steps">Animation Steps
+            <input type="range" min="1" max="50" id="mode-blink-steps" name="mode-blink-steps">
+          </label>
+          <!-- <small>We'll never share your email with anyone else.</small> -->
+
+          <label for="mode-blink-delay">Delay between Steps
+            <input type="range" min="0" max="100" id="mode-blink-delay" name="mode-blink-delay">
+          </label>
+
+          <label for="mode-blink-interval">Time between Animations
+            <input type="range" min="0" max="10000" id="mode-blink-interval" name="mode-blink-interval">
+          </label>
+        </article>
+
+        <article class="mode-form" id="form-mode-counter">
+          <label for="mode-counter-steps">Animation Steps
+            <input type="range" min="1" max="50" id="mode-counter-steps" name="mode-counter-steps">
+          </label>
+
+          <label for="mode-counter-delay">Delay between Steps
+            <input type="range" min="0" max="100" id="mode-counter-delay" name="mode-counter-delay">
+          </label>
+
+          <label for="mode-counter-nInt">Time between Numbers
+            <input type="range" min="0" max="10000" id="mode-counter-nInt" name="mode-counter-nInt">
+          </label>
+
+          <label for="mode-counter-eInt">Pause at 0 and max value
+            <input type="range" min="0" max="10000" id="mode-counter-eInt" name="mode-counter-eInt">
+          </label>
+        </article>
+
+        <article class="mode-form" id="form-mode-randomFade">
+          <label for="mode-randomFade-steps">Animation Steps
+            <input type="range" min="1" max="50" id="mode-randomFade-steps" name="mode-randomFade-steps">
+          </label>
+
+          <label for="mode-randomFade-delay">Delay between Steps
+            <input type="range" min="0" max="100" id="mode-randomFade-delay" name="mode-randomFade-delay">
+          </label>
+
+          <label for="mode-randomFade-min">Minimum change per animation step
+            <input type="range" min="1" max="100" id="mode-randomFade-min" name="mode-randomFade-min">
+          </label>
+
+          <label for="mode-randomFade-max">Maximum change per animation step
+            <input type="range" min="1" max="100" id="mode-randomFade-max" name="mode-randomFade-max">
+          </label>
+        </article>
+
+        <article class="mode-form" id="form-mode-kitt">
+          <label for="mode-kitt-steps">Animation Steps
+            <input type="range" min="1" max="50" id="mode-kitt-steps" name="mode-kitt-steps">
+          </label>
+
+          <label for="mode-kitt-delay">Delay between Steps
+            <input type="range" min="0" max="100" id="mode-kitt-delay" name="mode-kitt-delay">
+          </label>
+        </article>
+
+        <button id="save">Save Changes</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/zepto.min.js"></script>
+  <script>
+    (function ($) {
+      let config = {
+        modeBlink: {},
+        modeCounter: {},
+        modeRandomFade: {},
+        modeKitt: {},
+      };
+      let version = '';
+      let handleChangeEvent = true;
+
+      function updateView() {
+        handleChangeEvent = false;
+
+        $('#version').text(version);
+        $('#brightness').val(config.brightness);
+        $('#is-sleeping').toggle(config.sleeping);
+        $('#is-awake').toggle(!config.sleeping);
+
+        $('#mode-buttons a').addClass('secondary outline');
+        $(`#button-mode-${config.mode}`).removeClass('secondary outline');
+
+        $('#mode-blink-steps').val(config.modeBlink.steps);
+        $('#mode-blink-delay').val(config.modeBlink.delay);
+        $('#mode-blink-interval').val(config.modeBlink.interval);
+
+        $('#mode-counter-steps').val(config.modeCounter.steps);
+        $('#mode-counter-delay').val(config.modeCounter.delay);
+        $('#mode-counter-nInt').val(config.modeCounter.nInt);
+        $('#mode-counter-eInt').val(config.modeCounter.eInt);
+
+        $('#mode-randomFade-steps').val(config.modeRandomFade.steps);
+        $('#mode-randomFade-delay').val(config.modeRandomFade.delay);
+        $('#mode-randomFade-min').val(config.modeRandomFade.min);
+        $('#mode-randomFade-max').val(config.modeRandomFade.max);
+
+        $('#mode-kitt-steps').val(config.modeKitt.steps);
+        $('#mode-kitt-delay').val(config.modeKitt.delay);
+
+        $('.mode-form').hide();
+        $(`#form-mode-${config.mode}`).show();
+
+        handleChangeEvent = true;
+      }
+
+      function sendRequest(temp) {
+        disableView();
+
+        let payload = {
+          brightness: config.brightness,
+          mode: config.mode,
+          temp: temp,
+        };
+
+        switch (config.mode) {
+          case 'blink':
+            payload.modeBlink = JSON.parse(JSON.stringify(config.modeBlink));
+            break;
+          case 'counter':
+            payload.modeCounter = JSON.parse(JSON.stringify(config.modeCounter));
+            break;
+          case 'randomFade':
+            payload.modeRandomFade = JSON.parse(JSON.stringify(config.modeRandomFade));
+            break;
+          case 'kitt':
+            payload.modeKitt = JSON.parse(JSON.stringify(config.modeKitt));
+            break;
+        }
+
+        $.ajax({
+          type: 'POST',
+          url: '/config',
+          data: JSON.stringify(payload),
+          contentType: 'application/json',
+          async: false,
+        });
+
+        console.log("Done.");
+        enableView();
+      }
+
+      function pushUpdate() {
+        console.log("Pushing update...");
+        sendRequest(true);
+      }
+
+      function disableView() {
+        $('#overlay').show();
+      }
+
+      function enableView() {
+        $('#overlay').hide();
+      }
+
+      // setup event handlers
+      $('#mode-buttons a').on('click', function () {
+        config.mode = $(this).data('mode');
+        updateView();
+        pushUpdate();
+        return false;
+      });
+
+      $('#button-sleep').on('click', function () {
+        config.sleeping = true;
+        disableView();
+        updateView();
+        $.post('/sleep', {}, enableView);
+        return false;
+      });
+
+      $('#button-wake-up').on('click', function () {
+        config.sleeping = false;
+        disableView();
+        updateView();
+        $.post('/wakeup', {}, enableView);
+        return false;
+      });
+
+      function onChange(fn) {
+        return function () {
+          if (handleChangeEvent) {
+            fn(parseInt($(this).val(), 10), $(this));
+            updateView();
+            pushUpdate();
+          }
+          return false;
+        }
+      }
+
+      $('#save').on('click', function () {
+        console.log("Saving config permanently...");
+        disableView();
+        $.post('/save', {}, enableView);
+        return false;
+      });
+
+      // fetch the current config
+      console.log("Initializing...");
+      $('#indicator')[0].indeterminate = true;
+      $.getJSON('/config', function (data) {
+        console.log(data);
+
+        version = data.appVersion;
+
+        delete data.ssid;
+        delete data.version;
+        delete data.appVersion;
+
+        config = data;
+
+        updateView();
+
+        $('#brightness').on('change', onChange(function (val) { config.brightness = val; }));
+        $('#mode-blink-steps').on('change', onChange(function (val) { config.modeBlink.steps = val; }));
+        $('#mode-blink-delay').on('change', onChange(function (val) { config.modeBlink.delay = val; }));
+        $('#mode-blink-interval').on('change', onChange(function (val) { config.modeBlink.interval = val; }));
+
+        $('#mode-counter-steps').on('change', onChange(function (val) { config.modeCounter.steps = val; }));
+        $('#mode-counter-delay').on('change', onChange(function (val) { config.modeCounter.delay = val; }));
+        $('#mode-counter-nInt').on('change', onChange(function (val) { config.modeCounter.nInt = val; }));
+        $('#mode-counter-eInt').on('change', onChange(function (val) { config.modeCounter.eInt = val; }));
+
+        $('#mode-randomFade-steps').on('change', onChange(function (val) { config.modeRandomFade.steps = val; }));
+        $('#mode-randomFade-delay').on('change', onChange(function (val) { config.modeRandomFade.delay = val; }));
+        $('#mode-randomFade-min').on('change', onChange(function (val) { config.modeRandomFade.min = val; }));
+        $('#mode-randomFade-max').on('change', onChange(function (val) { config.modeRandomFade.max = val; }));
+
+        $('#mode-kitt-steps').on('change', onChange(function (val) { config.modeKitt.steps = val; }));
+        $('#mode-kitt-delay').on('change', onChange(function (val) { config.modeKitt.delay = val; }));
+
+        $('#loading').hide();
+        $('#configuration').show();
+      });
+    }($));
+  </script>
+</body>
+
+</html>

@@ -74,7 +74,7 @@ namespace eeprom {
 			return true;
 		}
 
-		StaticJsonDocument<512> doc;
+		StaticJsonDocument<256> doc;
 
 		DeserializationError error = deserializeJson(doc, json.c_str(), json.length());
 		if (error) {
@@ -99,7 +99,7 @@ namespace eeprom {
 
 		if (doc.containsKey("brightness")) {
 			uint8_t brightness = doc["brightness"];
-			if (brightness > 0 && brightness <= 100) {
+			if (brightness > 0 && brightness <= 100 && brightness != config->brightness) {
 				xrstf::serialPrintf("Update: Setting brightness to %d%%.\n", brightness);
 				config->brightness = brightness;
 				changes            = true;
@@ -147,34 +147,36 @@ namespace eeprom {
 		}
 
 		if (doc.containsKey("modeBlink")) {
-			StaticJsonDocument<256> blinkConfig = doc["modeBlink"];
+			StaticJsonDocument<96> blinkConfig = doc["modeBlink"];
 			if (BlinkettoModeBlink::updateFromJSON(&config->modeBlinkConfig, blinkConfig)) {
 				changes = true;
 			}
 		}
 
 		if (doc.containsKey("modeCounter")) {
-			StaticJsonDocument<256> blinkConfig = doc["modeCounter"];
+			StaticJsonDocument<96> blinkConfig = doc["modeCounter"];
 			if (BlinkettoModeCounter::updateFromJSON(&config->modeCounterConfig, blinkConfig)) {
 				changes = true;
 			}
 		}
 
 		if (doc.containsKey("modeRandomFade")) {
-			StaticJsonDocument<256> blinkConfig = doc["modeRandomFade"];
+			StaticJsonDocument<96> blinkConfig = doc["modeRandomFade"];
 			if (BlinkettoModeRandomFade::updateFromJSON(&config->modeRandomFadeConfig, blinkConfig)) {
 				changes = true;
 			}
 		}
 
 		if (doc.containsKey("modeKitt")) {
-			StaticJsonDocument<256> blinkConfig = doc["modeKitt"];
+			StaticJsonDocument<96> blinkConfig = doc["modeKitt"];
 			if (BlinkettoModeKitt::updateFromJSON(&config->modeKittConfig, blinkConfig)) {
 				changes = true;
 			}
 		}
 
-		if (changes) {
+		bool temporary = !doc.containsKey("temp") || ((bool) doc["temp"] == false);
+
+		if (changes && !temporary) {
 			save(config);
 		}
 

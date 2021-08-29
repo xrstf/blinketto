@@ -41,8 +41,7 @@ bool Interrupter::shouldInterrupt(Blinketto &blinketto) {
 	// if the user changed the brightness, that means we want
 	// to "break out" of the sleep mode (e.g. via a HTTP call)
 	if (this->config->brightness != prevBrightness) {
-		blinketto.setFullBrightness(this->config->brightness);
-		this->sleeping = false;
+		this->toggleSleep(blinketto, false);
 	}
 
 	// allow the user to toggle sleep mode via the webserver
@@ -61,5 +60,6 @@ bool Interrupter::shouldInterrupt(Blinketto &blinketto) {
 
 void Interrupter::toggleSleep(Blinketto &blinketto, bool sleeping) {
 	this->sleeping = sleeping;
+	global::isSleeping = sleeping;
 	blinketto.setFullBrightness(sleeping ? 0 : this->config->brightness);
 }

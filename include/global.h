@@ -8,6 +8,9 @@ namespace global {
 	// set to the curren time whenever the button is pressed
 	extern volatile unsigned long sleepButtonPressed;
 
+	// set by interrupter
+	extern bool isSleeping;
+
 	// set by the HTTP webserver
 	extern bool goToSleep;
 	extern bool goWakeUp;

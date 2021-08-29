@@ -16,30 +16,36 @@ bool BlinkettoModeBlink::canRun(Blinketto &blinketto) {
 	return true;
 }
 
+void BlinkettoModeBlink::toJSON(BlinkettoModeBlinkConfig *config, JsonDocument &doc) {
+	doc["steps"] = config->steps;
+	doc["delay"] = config->stepDelay;
+	doc["interval"] = config->timeBetweenFades;
+}
+
 bool BlinkettoModeBlink::updateFromJSON(BlinkettoModeBlinkConfig *config, const JsonDocument &doc) {
 	bool changes = false;
 
 	if (doc.containsKey("steps")) {
 		int steps = doc["steps"];
-		if (steps >= 0 && steps <= 60 && ((char)steps) != config->steps) {
+		if (steps >= 1 && steps <= 50 && ((char)steps) != config->steps) {
 			xrstf::serialPrintf("Update: Setting modeBlink.steps to %d.\n", steps);
 			config->steps = (uint8_t)steps;
 			changes       = true;
 		}
 	}
 
-	if (doc.containsKey("stepDelay")) {
-		int stepDelay = doc["stepDelay"];
-		if (stepDelay >= 0 && stepDelay <= 60 && ((char)stepDelay) != config->stepDelay) {
+	if (doc.containsKey("delay")) {
+		int stepDelay = doc["delay"];
+		if (stepDelay >= 0 && stepDelay <= 100 && ((char)stepDelay) != config->stepDelay) {
 			xrstf::serialPrintf("Update: Setting modeBlink.stepDelay to %d.\n", stepDelay);
 			config->stepDelay = (uint32_t)stepDelay;
 			changes           = true;
 		}
 	}
 
-	if (doc.containsKey("timeBetweenFades")) {
-		int timeBetweenFades = doc["timeBetweenFades"];
-		if (timeBetweenFades >= 0 && timeBetweenFades <= 60 && ((char)timeBetweenFades) != config->timeBetweenFades) {
+	if (doc.containsKey("interval")) {
+		int timeBetweenFades = doc["interval"];
+		if (timeBetweenFades >= 0 && timeBetweenFades <= 10000 && ((char)timeBetweenFades) != config->timeBetweenFades) {
 			xrstf::serialPrintf("Update: Setting modeBlink.timeBetweenFades to %d.\n", timeBetweenFades);
 			config->timeBetweenFades = (uint32_t)timeBetweenFades;
 			changes                  = true;
